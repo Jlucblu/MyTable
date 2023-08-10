@@ -396,3 +396,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+#myignorelist
+antlr4-cpp-runtime-4.13.0-source/
+build/
+dist/
