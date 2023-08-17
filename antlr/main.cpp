@@ -83,6 +83,7 @@ namespace {
         sheet->ClearCell("A1"_pos);
         sheet->ClearCell("J10"_pos);
     }
+
     void TestPrint() {
         auto sheet = CreateSheet();
         sheet->SetCell("A2"_pos, "meow");
