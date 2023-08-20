@@ -78,7 +78,7 @@ bool Size::operator==(Size rhs) const {
 }
 
 std::ostream& operator<<(std::ostream& output, FormulaError fe) {
-
+    return output << fe.ToString();
 }
 
 FormulaError::FormulaError(Category category)
