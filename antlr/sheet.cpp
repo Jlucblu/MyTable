@@ -111,20 +111,20 @@ std::unique_ptr<SheetInterface> CreateSheet() {
     return std::make_unique<Sheet>();
 }
 
-std::ostream& operator<<(std::ostream& os, const CellInterface::Value& value) {
+std::ostream& operator<<(std::ostream& output, const CellInterface::Value& value) {
     if (std::holds_alternative<std::string>(value)) {
-        os << std::get<std::string>(value);
+        output << std::get<std::string>(value);
     }
     else if (std::holds_alternative<double>(value)) {
-        os << std::get<double>(value);
+        output << std::get<double>(value);
     }
     else if (std::holds_alternative<FormulaError>(value)) {
-        os << std::get<FormulaError>(value);
+        output << std::get<FormulaError>(value);
     }
     else {
-        os << "Unknown Value";
+        output << "Unknown Value";
     }
-    return os;
+    return output;
 }
 
 

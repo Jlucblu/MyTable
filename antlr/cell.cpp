@@ -82,3 +82,11 @@ Cell::Value Cell::FormulaImpl::GetValue() const {
 }
 
 std::string Cell::FormulaImpl::GetText() const { return FORMULA_SIGN + formula_ptr_->GetExpression(); }
+
+Type Cell::GetType() {
+    return type_;
+}
+
+Status Cell::GetStatus() {
+    return cache_status_;
+}

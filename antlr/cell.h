@@ -34,6 +34,8 @@ public:
     bool IsReferenced() const;
     void ClearCache();
     void UpdDependent(const Position& pos);
+    Status GetStatus();
+    Type GetType();
 
 private:
 
