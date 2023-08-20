@@ -2,6 +2,8 @@
 
 #include "common.h"
 #include "formula.h"
+#include <optional>
+#include <set>
 
 enum Type {
     EMPTY,
@@ -9,9 +11,17 @@ enum Type {
     TEXT
 };
 
+enum Status {
+    DIRTY,
+    CLEAN,
+    NONE
+};
+
+class Sheet;
+
 class Cell : public CellInterface {
 public:
-    Cell();
+    Cell(Sheet& sheet);
     ~Cell();
 
     void Set(std::string text);
@@ -19,6 +29,11 @@ public:
 
     Value GetValue() const override;
     std::string GetText() const override;
+    std::vector<Position> GetReferencedCells() const override;
+
+    bool IsReferenced() const;
+    void ClearCache();
+    void UpdDependent(const Position& pos);
 
 private:
 
@@ -27,6 +42,8 @@ private:
 
         virtual Value GetValue() const = 0;
         virtual std::string GetText() const = 0;
+        virtual Position GetPosition() const = 0;
+        virtual void ClearCache();
 
         virtual ~Impl() = default;
     };
@@ -44,9 +61,11 @@ private:
         explicit TextImpl(std::string text);
         Value GetValue() const override;
         std::string GetText() const override;
+        Position GetPosition() const override;
 
     private:
         std::string text_;
+        Position pos_;
     };
 
     class FormulaImpl : public Impl {
@@ -55,11 +74,20 @@ private:
         explicit FormulaImpl(std::string text);
         Value GetValue() const override;
         std::string GetText() const override;
+        Position GetPosition() const override;
+        virtual void ClearCache();
 
     private:
         std::unique_ptr<FormulaInterface> formula_ptr_;
+        const SheetInterface& sheet_;
+        Position pos_;
     };
 
     std::unique_ptr<Impl> impl_;
+    Sheet& sheet_;
     Type type_ = EMPTY;
+    Status cache_status_ = NONE;
+
+    std::set<CellInterface*> dependent_;
+    std::optional<Value> cache_;
 };
