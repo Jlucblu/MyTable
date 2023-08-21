@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cctype>
 #include <sstream>
+#include <set>
 
 using namespace std::literals;
 
@@ -33,6 +34,19 @@ public:
         std::stringstream ss;
         ast_.PrintFormula(ss);
         return ss.str();
+    }
+
+    std::vector<Position> GetReferencedCells() const override {
+        std::set<Position> cells;
+        for (Position pos : ast_.GetCells()) {
+            if (pos.IsValid()) {
+                cells.insert(pos);
+            }
+        }
+
+        std::vector<Position> result(cells.begin(), cells.end());
+
+        return result;
     }
 
 private:

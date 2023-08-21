@@ -35,4 +35,6 @@ private:
     std::unordered_map<Position, std::unique_ptr<Cell>, Hasher> table_;
 };
 
-std::ostream& operator<<(std::ostream& output, const CellInterface::Value& value);
+namespace {
+    std::ostream& operator<<(std::ostream& output, const CellInterface::Value& value);
+}

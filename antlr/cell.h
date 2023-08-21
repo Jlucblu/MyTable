@@ -17,25 +17,25 @@ enum Status {
     NONE
 };
 
-class Sheet;
-
 class Cell : public CellInterface {
 public:
-    Cell(Sheet& sheet);
+    Cell(SheetInterface& sheet);
     ~Cell();
 
-    void Set(std::string text);
+    void Set(std::string text, Position pos);
+    void CheckCyclic(const Position& pos, const std::vector<Position>& cells);
     void Clear();
 
     Value GetValue() const override;
     std::string GetText() const override;
     std::vector<Position> GetReferencedCells() const override;
 
-    bool IsReferenced() const;
-    void ClearCache();
-    void UpdDependent(const Position& pos);
-    Status GetStatus();
-    Type GetType();
+    //bool IsReferenced() const;
+    //void ClearCache();
+    //void UpdDependent(const Position& pos);
+
+    //Status GetStatus();
+    //Type GetType();
 
 private:
 
@@ -44,8 +44,9 @@ private:
 
         virtual Value GetValue() const = 0;
         virtual std::string GetText() const = 0;
-        virtual Position GetPosition() const = 0;
-        virtual void ClearCache();
+        //virtual Position GetPosition() const = 0;
+        //virtual void ClearCache();
+        virtual std::vector<Position> GetReferencedCells() const;
 
         virtual ~Impl() = default;
     };
@@ -63,33 +64,33 @@ private:
         explicit TextImpl(std::string text);
         Value GetValue() const override;
         std::string GetText() const override;
-        Position GetPosition() const override;
 
     private:
         std::string text_;
-        Position pos_;
     };
 
     class FormulaImpl : public Impl {
     public:
 
-        explicit FormulaImpl(std::string text);
+        explicit FormulaImpl(std::string text, SheetInterface& sheet);
         Value GetValue() const override;
         std::string GetText() const override;
-        Position GetPosition() const override;
-        virtual void ClearCache();
+        //virtual void ClearCache();
+        std::vector<Position> GetReferencedCells() const override;
 
     private:
         std::unique_ptr<FormulaInterface> formula_ptr_;
-        const SheetInterface& sheet_;
-        Position pos_;
+        SheetInterface& sheet_prt_;
+        mutable std::optional<Value> cache_;
     };
 
-    std::unique_ptr<Impl> impl_;
-    Sheet& sheet_;
-    Type type_ = EMPTY;
-    Status cache_status_ = NONE;
+    std::unique_ptr<Impl> CreateImpl(std::string text);
 
-    std::set<CellInterface*> dependent_;
-    std::optional<Value> cache_;
+
+    std::unique_ptr<Impl> impl_;
+    SheetInterface& sheet_;
+    /*std::set<CellInterface*> dependent_;*/
+
+    Type type_ = EMPTY;
+    //Status cache_status_ = NONE;
 };

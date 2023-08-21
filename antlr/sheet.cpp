@@ -15,11 +15,11 @@ Sheet::~Sheet() {}
 void Sheet::SetCell(Position pos, std::string text) {
     if (pos.IsValid()) {
         if (table_.find(pos) != table_.end()) {
-            table_[pos]->Set(text);
+            table_[pos]->Set(text, pos);
         }
         else {
-            table_[pos] = std::make_unique<Cell>();
-            table_[pos]->Set(text);
+            table_[pos] = std::make_unique<Cell>(*this);
+            table_[pos]->Set(text, pos);
         }
     }
     else {
@@ -111,22 +111,23 @@ std::unique_ptr<SheetInterface> CreateSheet() {
     return std::make_unique<Sheet>();
 }
 
-std::ostream& operator<<(std::ostream& output, const CellInterface::Value& value) {
-    if (std::holds_alternative<std::string>(value)) {
-        output << std::get<std::string>(value);
+namespace {
+    std::ostream& operator<<(std::ostream& output, const CellInterface::Value& value) {
+        if (std::holds_alternative<std::string>(value)) {
+            output << std::get<std::string>(value);
+        }
+        else if (std::holds_alternative<double>(value)) {
+            output << std::get<double>(value);
+        }
+        else if (std::holds_alternative<FormulaError>(value)) {
+            output << std::get<FormulaError>(value);
+        }
+        else {
+            output << "Unknown Value";
+        }
+        return output;
     }
-    else if (std::holds_alternative<double>(value)) {
-        output << std::get<double>(value);
-    }
-    else if (std::holds_alternative<FormulaError>(value)) {
-        output << std::get<FormulaError>(value);
-    }
-    else {
-        output << "Unknown Value";
-    }
-    return output;
 }
-
 
 /*
 Разберёмся с ограничениями на производительность. 
