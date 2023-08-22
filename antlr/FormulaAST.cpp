@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <charconv>
 
 namespace ASTImpl {
 
@@ -247,13 +248,19 @@ namespace ASTImpl {
 
                     if (std::holds_alternative<std::string>(value)) {
                         std::string str = std::get<std::string>(value);
-                        if (str.empty()) return 0.0;
-
-                        try {
-                            return std::stod(str);
+                        if (str.empty()) {
+                            return 0.0;
                         }
-                        catch (const std::invalid_argument&) {
-                            throw FormulaError(FormulaError::Category::Value);
+                        else {
+                            double numericValue;
+                            auto result = std::from_chars(str.data(), str.data() + str.size(), numericValue);
+
+                            if (result.ec == std::errc{} && result.ptr == str.data() + str.size()) {
+                                return numericValue;
+                            }
+                            else {
+                                throw FormulaError(FormulaError::Category::Value);
+                            }
                         }
                     }
                     else if (std::holds_alternative<double>(value)) {
