@@ -9,7 +9,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
-#include <charconv>
+#include <regex>
 
 namespace ASTImpl {
 
@@ -243,24 +243,17 @@ namespace ASTImpl {
             double Evaluate(const SheetInterface& args) const override {
                 if (cell_->IsValid()) {
                     const CellInterface* cell = args.GetCell(*cell_);
-                    if (cell == nullptr) return 0.0;
+                    if (cell == nullptr) { return 0.0; }
                     const CellInterface::Value value = cell->GetValue();
 
                     if (std::holds_alternative<std::string>(value)) {
                         std::string str = std::get<std::string>(value);
-                        if (str.empty()) {
-                            return 0.0;
+                        if (str.empty()) { return 0.0; }
+                        if (std::regex_match(str, std::regex(R"(^([+-]?(?:[[:d:]]+\.?|[[:d:]]*\.[[:d:]]+))(?:[Ee][+-]?[[:d:]]+)?$)"))) {
+                            return std::stod(str);
                         }
                         else {
-                            double numeric;
-                            auto result = std::from_chars(str.data(), str.data() + str.size(), numeric);
-
-                            if (result.ec == std::errc{} && result.ptr == str.data() + str.size()) {
-                                return numeric;
-                            }
-                            else {
-                                throw FormulaError(FormulaError::Category::Value);
-                            }
+                            throw FormulaError(FormulaError::Category::Value);
                         }
                     }
                     else if (std::holds_alternative<double>(value)) {
@@ -438,7 +431,12 @@ FormulaAST ParseFormulaAST(std::istream& in) {
 
 FormulaAST ParseFormulaAST(const std::string& in_str) {
     std::istringstream in(in_str);
-    return ParseFormulaAST(in);
+    try {
+        return ParseFormulaAST(in);
+    } 
+    catch (...) {
+        throw FormulaException("Syntactically invalid formula");
+    }
 }
 
 void FormulaAST::PrintCells(std::ostream& out) const {

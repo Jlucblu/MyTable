@@ -19,10 +19,7 @@ class Formula : public FormulaInterface {
 public:
 // Реализуйте следующие методы:
     explicit Formula(std::string expression)
-        try : ast_(ParseFormulaAST(expression)) {}
-    catch (std::exception& exc) {
-        throw FormulaException(exc.what());
-    }
+        :ast_(ParseFormulaAST(expression)) {}
 
     Value Evaluate(const SheetInterface& args) const override {
         try {

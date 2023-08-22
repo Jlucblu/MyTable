@@ -12,14 +12,20 @@ Cell::Cell(SheetInterface& sheet)
 Cell::~Cell() = default;
 
 void Cell::Set(std::string text, Position pos) {
+    ClearCache();
+    RemoveDependencies();
     auto impl = CreateImpl(text);
+    auto cells = impl->GetReferencedCells();
 
     if (type_ == FORMULA) {
-        auto cells = impl->GetReferencedCells();
         CheckCyclic(pos, cells);
     }
 
     impl_ = std::move(impl);
+
+    for (auto& cell : cells) {
+        UpdDependent(pos, cell);
+    }
 }
 
 void Cell::Clear() {
@@ -65,17 +71,15 @@ Cell::FormulaImpl::FormulaImpl(std::string text, SheetInterface& sheet)
 {}
 
 Cell::Value Cell::FormulaImpl::GetValue() const {
-    if (cache_.has_value()) {
-        return *cache_;
+    if (!cache_.has_value()) {
+        cache_ = formula_ptr_->Evaluate(sheet_prt_);
     }
 
-    auto helper = formula_ptr_->Evaluate(sheet_prt_);
-
-    if (std::holds_alternative<double>(helper)) {
-        return std::get<double>(helper);
+    if (std::holds_alternative<double>(cache_.value())) {
+        return std::get<double>(cache_.value());
     }
     else {
-        return std::get<FormulaError>(helper);
+        return std::get<FormulaError>(cache_.value());
     }
 }
 
@@ -128,10 +132,29 @@ void Cell::CheckCyclic(const Position& pos, const std::vector<Position>& cells) 
     }
 }
 
-//Type Cell::GetType() {
-//    return type_;
-//}
+void Cell::UpdDependent(const Position& current_pos, const Position& dependent_pos) {
+    Cell* current_cell = dynamic_cast<Cell*>(sheet_.GetCell(current_pos));
+    Cell* dependent_cell = dynamic_cast<Cell*>(sheet_.GetCell(dependent_pos));
+    dependent_cell->cells_dependent_on_this_.insert(current_cell);
+    cells_this_depends_on_.insert(dependent_cell);
+}
 
-//Status Cell::GetStatus() {
-//    return cache_status_;
-//}
+void Cell::Impl::ClearCache() {}
+
+void Cell::FormulaImpl::ClearCache() {
+    cache_.reset();
+}
+
+void Cell::ClearCache() {
+    impl_->ClearCache();
+    for (auto dep_cell : cells_dependent_on_this_) {
+        dep_cell->ClearCache();
+    }
+}
+
+void Cell::RemoveDependencies() {
+    for (auto dep_cell : cells_this_depends_on_) {
+        dep_cell->cells_dependent_on_this_.erase(this);
+    }
+    cells_this_depends_on_.clear();
+}

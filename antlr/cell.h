@@ -11,12 +11,6 @@ enum Type {
     TEXT
 };
 
-enum Status {
-    DIRTY,
-    CLEAN,
-    NONE
-};
-
 class Cell : public CellInterface {
 public:
     Cell(SheetInterface& sheet);
@@ -24,18 +18,15 @@ public:
 
     void Set(std::string text, Position pos);
     void CheckCyclic(const Position& pos, const std::vector<Position>& cells);
+    void UpdDependent(const Position& current_pos, const Position& dependent_pos);
+    void RemoveDependencies();
     void Clear();
+    void ClearCache();
+
 
     Value GetValue() const override;
     std::string GetText() const override;
     std::vector<Position> GetReferencedCells() const override;
-
-    //bool IsReferenced() const;
-    //void ClearCache();
-    //void UpdDependent(const Position& pos);
-
-    //Status GetStatus();
-    //Type GetType();
 
 private:
 
@@ -44,9 +35,8 @@ private:
 
         virtual Value GetValue() const = 0;
         virtual std::string GetText() const = 0;
-        //virtual Position GetPosition() const = 0;
-        //virtual void ClearCache();
         virtual std::vector<Position> GetReferencedCells() const;
+        virtual void ClearCache();
 
         virtual ~Impl() = default;
     };
@@ -75,13 +65,13 @@ private:
         explicit FormulaImpl(std::string text, SheetInterface& sheet);
         Value GetValue() const override;
         std::string GetText() const override;
-        //virtual void ClearCache();
+        void ClearCache() override;
         std::vector<Position> GetReferencedCells() const override;
 
     private:
         std::unique_ptr<FormulaInterface> formula_ptr_;
         SheetInterface& sheet_prt_;
-        mutable std::optional<Value> cache_;
+        mutable std::optional<FormulaInterface::Value> cache_;
     };
 
     std::unique_ptr<Impl> CreateImpl(std::string text);
@@ -89,8 +79,8 @@ private:
 
     std::unique_ptr<Impl> impl_;
     SheetInterface& sheet_;
-    /*std::set<CellInterface*> dependent_;*/
+    std::set<Cell*> cells_dependent_on_this_;
+    std::set<Cell*> cells_this_depends_on_;
 
     Type type_ = EMPTY;
-    //Status cache_status_ = NONE;
 };
