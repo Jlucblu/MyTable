@@ -252,11 +252,11 @@ namespace ASTImpl {
                             return 0.0;
                         }
                         else {
-                            double numericValue;
-                            auto result = std::from_chars(str.data(), str.data() + str.size(), numericValue);
+                            double numeric;
+                            auto result = std::from_chars(str.data(), str.data() + str.size(), numeric);
 
                             if (result.ec == std::errc{} && result.ptr == str.data() + str.size()) {
-                                return numericValue;
+                                return numeric;
                             }
                             else {
                                 throw FormulaError(FormulaError::Category::Value);
